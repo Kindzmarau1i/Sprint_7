@@ -9,47 +9,34 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.Map;
-
 import static org.hamcrest.Matchers.hasKey;
 
 @DisplayName("Логин курьера")
-public class LoginCourierTest {
+public class LoginCourierTest extends BaseTest {
 
     CourierApi courierApi = new CourierApi();
-
-    private final String LOGIN = "Логин";
-    private final String PASSWORD = "Пароль";
-    private final String FIRST_NAME = "Имя";
 
     @Test
     @DisplayName("Курьер может авторизоваться")
     @Description("Проверка, курьер может авторизоваться")
     public void loginCourierSuccessTest() {
-        // Подготовить тестовые данные
-        Map<String, String> testData = prepareTestData();
-
         // Создать нового курьера
-        createCourier(testData.get(LOGIN), testData.get(PASSWORD), testData.get(FIRST_NAME));
+        createCourier(LOGIN, PASSWORD, FIRST_NAME);
 
         // Аворизовать курьера
-        TypedResponse<AuthCourierResponseDTO> secondResponse = getCourierId(testData.get(LOGIN), testData.get(PASSWORD));
+        TypedResponse<AuthCourierResponseDTO> secondResponse = getCourierId(LOGIN, PASSWORD);
 
         // 1.Проверить, что курьер может автризоваться
         // 2.Проверить, что для авторизации нужно передать все обязательные поля
         // 3.Проверить, что успешный запрос возвращает id
         Assert.assertEquals(200, secondResponse.statusCode());
         secondResponse.response().then().assertThat().body("", hasKey("id"));
-
-        // Удалить курьера
-        courierApi.deleteCourier(getCourierId(testData.get(LOGIN), testData.get(PASSWORD)).body().getId());
     }
 
     @Test
     @DisplayName("Система вернёт ошибку, если неправильно указать логин или пароль")
     @Description("Проверка, что запрос возвращает ошибку, если неправильно указать логин или пароль")
     public void wrongLoginCourierTest() {
-
         // Аворизовать курьера
         TypedResponse<AuthCourierResponseDTO> response = getCourierId(RandomStringUtils.randomAlphabetic(7),
                 RandomStringUtils.randomAlphabetic(5));
@@ -64,23 +51,12 @@ public class LoginCourierTest {
     @DisplayName("Если какого-то поля нет, запрос возвращает ошибку")
     @Description("Проверка, что запрос возвращает ошибку, если какого-то поля нет")
     public void loginCourierWithoutRequiredAttributeTest() {
-
         // Аворизовать курьера
         TypedResponse<AuthCourierResponseDTO> response = getCourierId(null, RandomStringUtils.randomAlphabetic(7));
 
         // Проверить, что система вернёт ошибку, если не указать обязательный атрибут
         Assert.assertEquals(400, response.statusCode());
         Assert.assertEquals("Недостаточно данных для входа", response.error().getMessage());
-    }
-
-    /**
-     * Подготовить тест-дату
-     */
-    public Map<String, String> prepareTestData() {
-        String login = RandomStringUtils.randomAlphabetic(7);
-        String password = RandomStringUtils.randomAlphabetic(5);
-        String firstName = RandomStringUtils.randomAlphabetic(10);
-        return Map.of(LOGIN, login, PASSWORD, password, FIRST_NAME, firstName);
     }
 
     /**
